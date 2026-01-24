@@ -11,12 +11,12 @@ FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 # --- INIZIO BLOCCO CRITICO ---
 # Riceve i valori dalla GitHub Action
 ARG NUGET_USERNAME
-ARG NUGET_PASSWORD
+ARG NUGET_TOKEN
 ARG BUILD_CONFIGURATION=Release
 
 # Imposta le variabili d'ambiente che NuGet.config leggerà
 ENV NUGET_USERNAME=$NUGET_USERNAME
-ENV NUGET_PASSWORD=$NUGET_PASSWORD
+ENV NUGET_TOKEN=$NUGET_TOKEN
 # --- FINE BLOCCO CRITICO ---
 
 WORKDIR /src

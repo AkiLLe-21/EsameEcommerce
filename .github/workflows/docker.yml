@@ -5,7 +5,7 @@ on:
   push:
     branches: [ "main" ]
     paths:
-      - 'Ecommerce.Magazzino/**'
+      - 'microservizi/Ecommerce.Magazzino/**'
 
 env:
   REGISTRY: ghcr.io

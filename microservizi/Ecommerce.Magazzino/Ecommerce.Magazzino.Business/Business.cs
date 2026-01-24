@@ -37,6 +37,7 @@ public class Business(IRepository repository, ILogger<Business> logger) : IBusin
         };
     }
 
+
     public async Task<bool> CheckAvailabilityAsync(int id, int quantita, CancellationToken cancellationToken = default) {
         return await repository.CheckDisponibilitaAsync(id, quantita, cancellationToken);
     }
