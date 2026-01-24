@@ -14,13 +14,18 @@ builder.Services.AddSwaggerGen();
 // DB Context
 builder.Services.AddDbContext<MagazzinoDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("MagazzinoDbContext"),
-    b => b.MigrationsAssembly("Unipr.Magazzino.Api")));
+    b => b.MigrationsAssembly("Ecommerce.Magazzino.Api")));
 
 // Dependency Injection
 builder.Services.AddScoped<IRepository, Repository>();
 builder.Services.AddScoped<IBusiness, Business>();
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope()) {
+    var context = scope.ServiceProvider.GetRequiredService<MagazzinoDbContext>();
+    context.Database.EnsureCreated();
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment()) {
