@@ -58,7 +58,7 @@ services:
       - mssql-server
       - kafka
     environment:
-      - ConnectionStrings__DefaultConnection=Server=mssql-server;Database=EcommerceWarehouseDB;User Id=sa;Password=p4ssw0rD;TrustServerCertificate=True;
+      - ConnectionStrings__DefaultConnection=Server=mssql-server;Database=MagazzinoDb;User Id=sa;Password=p4ssw0rD;TrustServerCertificate=True;
       - ASPNETCORE_ENVIRONMENT=Development
 
 volumes:
