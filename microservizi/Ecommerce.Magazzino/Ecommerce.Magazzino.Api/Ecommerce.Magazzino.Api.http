@@ -1,0 +1,6 @@
+@Ecommerce.Magazzino.Api_HostAddress = http://localhost:5241
+
+GET {{Ecommerce.Magazzino.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
