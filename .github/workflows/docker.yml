@@ -38,4 +38,4 @@ jobs:
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
           build-args: |
             NUGET_USERNAME=${{ secrets.NUGET_USERNAME }}
-            NUGET_PASSWORD=${{ secrets.NUGET_PASSWORD }}
+            NUGET_TOKEN=${{ secrets.NUGET_TOKEN }}

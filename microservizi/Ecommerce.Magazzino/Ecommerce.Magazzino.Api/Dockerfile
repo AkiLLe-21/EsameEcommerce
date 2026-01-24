@@ -7,15 +7,17 @@ EXPOSE 8081
 
 # Usa l'immagine SDK per la compilazione
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
-# Argomenti passati dalla GitHub Action
+
+# --- INIZIO BLOCCO CRITICO ---
+# Riceve i valori dalla GitHub Action
 ARG NUGET_USERNAME
 ARG NUGET_PASSWORD
 ARG BUILD_CONFIGURATION=Release
 
-# IMPORTANTE: Mappa gli ARG in ENV. 
-# Questo assicura che NuGet.config possa leggerli in QUALSIASI comando successivo.
+# Imposta le variabili d'ambiente che NuGet.config leggerà
 ENV NUGET_USERNAME=$NUGET_USERNAME
 ENV NUGET_PASSWORD=$NUGET_PASSWORD
+# --- FINE BLOCCO CRITICO ---
 
 WORKDIR /src
 
@@ -29,23 +31,20 @@ COPY ["Ecommerce.Magazzino.ClientHttp/Ecommerce.Magazzino.ClientHttp.csproj", "E
 COPY ["Ecommerce.Magazzino.Repository/Ecommerce.Magazzino.Repository.csproj", "Ecommerce.Magazzino.Repository/"]
 COPY ["Ecommerce.Magazzino.Shared/Ecommerce.Magazzino.Shared.csproj", "Ecommerce.Magazzino.Shared/"]
 
-# Esegue il restore (Qui usa le credenziali)
+# Restore
 RUN dotnet restore "./Ecommerce.Magazzino.Api/Ecommerce.Magazzino.Api.csproj"
 
-# Copia tutto il resto del codice
+# Copia tutto il resto
 COPY . .
 WORKDIR "/src/Ecommerce.Magazzino.Api"
 
-# CRUCIALE: Aggiunto --no-restore
-# Dice a dotnet: "Non cercare di scaricare pacchetti, usa quelli che hai già".
+# Build con --no-restore
 RUN dotnet build "./Ecommerce.Magazzino.Api.csproj" -c $BUILD_CONFIGURATION -o /app/build --no-restore
 
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-# CRUCIALE: Aggiunto --no-restore anche qui
 RUN dotnet publish "./Ecommerce.Magazzino.Api.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false --no-restore
 
-# Costruisci l'immagine finale
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
