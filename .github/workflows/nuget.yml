@@ -1,0 +1,31 @@
+name: Utility Kafka NuGet Publish
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'librerie/Utility.Kafka/**'
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./librerie/Utility.Kafka
+    steps:
+    - uses: actions/checkout@v3
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: 9.0.x
+    - name: Restore dependencies
+      run: dotnet restore
+      env:
+        NUGET_USERNAME: ${{ secrets.NUGET_USERNAME }}
+        NUGET_TOKEN: ${{ secrets.NUGET_TOKEN }}
+    - name: Build and Pack
+      run: dotnet build --configuration Release --no-restore
+    - name: Push NuGet
+      run: |
+        dotnet nuget push bin/Release/*.nupkg \
+          --source "https://nuget.pkg.github.com/${{ secrets.NUGET_USERNAME }}/index.json" \
+          --api-key ${{ secrets.NUGET_TOKEN }} \
+          --skip-duplicate
