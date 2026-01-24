@@ -13,9 +13,6 @@ ARG NUGET_PASSWORD
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 
-# 1. Copia il file di configurazione NuGet per l'autenticazione
-COPY ["NuGet.config", "."]
-
 # 2. Copia i file .csproj di TUTTI i progetti della solution
 COPY ["Ecommerce.Magazzino.Api/Ecommerce.Magazzino.Api.csproj", "Ecommerce.Magazzino.Api/"]
 COPY ["Ecommerce.Magazzino.Business/Ecommerce.Magazzino.Business.csproj", "Ecommerce.Magazzino.Business/"]
