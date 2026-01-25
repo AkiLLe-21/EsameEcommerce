@@ -3,30 +3,32 @@ using Ecommerce.Ordini.Business.Abstraction;
 using Ecommerce.Ordini.Repository.Abstraction;
 using Ecommerce.Ordini.Repository.Model;
 using Ecommerce.Ordini.Shared;
-using Ecommerce.Magazzino.ClientHttp.Abstraction; // Dal pacchetto NuGet
-using Utility.Kafka.Abstractions.Clients; // Dal pacchetto NuGet
-using Utility.Kafka.Constants; // Dal pacchetto NuGet
+using Ecommerce.Magazzino.ClientHttp.Abstraction;
+using Utility.Kafka.Abstractions.Clients;
+using Utility.Kafka.Constants;
+using Utility.Kafka.Messages;
+using System.Text.Json;
 
 namespace Ecommerce.Ordini.Business;
 
 public class Business(
     IRepository repository,
-    IMagazzinoClient magazzinoClient, // Client HTTP
-    IProducerClient producerClient,   // Kafka Producer
+    IMagazzinoClient magazzinoClient,
+    IProducerClient<string, string> producerClient, // Client puro stringa/stringa
     ILogger<Business> logger
     ) : IBusiness {
     public async Task<OrdineDto?> CreateOrdineAsync(OrdineDto dto, CancellationToken cancellationToken = default) {
         logger.LogInformation("Ricevuta richiesta ordine per prodotto {Id}", dto.ProdottoId);
 
-        // 1. COMUNICAZIONE SINCRONA (HTTP): Chiedo al magazzino se c'è disponibilità
+        // 1. Check Disponibilità
         bool disponibile = await magazzinoClient.CheckAvailabilityAsync(dto.ProdottoId, dto.Quantita, cancellationToken);
 
         if (!disponibile) {
-            logger.LogWarning("Prodotto {Id} non disponibile nel magazzino.", dto.ProdottoId);
-            return null; // O lanciare eccezione
+            logger.LogWarning("Prodotto {Id} non disponibile.", dto.ProdottoId);
+            return null;
         }
 
-        // 2. Salvo l'ordine in stato "Creato"
+        // 2. Salva Ordine
         var ordine = new Ordine {
             ProdottoId = dto.ProdottoId,
             Quantita = dto.Quantita,
@@ -37,12 +39,20 @@ public class Business(
         await repository.CreateOrdineAsync(ordine, cancellationToken);
         await repository.SaveChangesAsync(cancellationToken);
 
-        // 3. COMUNICAZIONE ASINCRONA (KAFKA): Notifico che l'ordine è stato creato
-        // Questo messaggio verrà ascoltato da "Pagamenti" (o dal Magazzino per scalare la merce)
-        await producerClient.ProduceAsync("ordine-creato", new Utility.Kafka.Messages.OperationMessage {
+        // 3. Invia messaggio Kafka
+        var messageObj = new OperationMessage<Ordine> {
             Operation = "Create",
-            Model = System.Text.Json.JsonSerializer.Serialize(ordine)
-        }, cancellationToken);
+            Dto = ordine
+        };
+
+        string jsonMessage = JsonSerializer.Serialize(messageObj);
+
+        await producerClient.ProduceAsync(
+            "ordine-creato",          // Topic
+            ordine.Id.ToString(),     // Key (Nuovo parametro mancante!)
+            jsonMessage,              // Value (Messaggio JSON)
+            cancellationToken         // Token
+        );
 
         logger.LogInformation("Ordine {Id} creato e notificato su Kafka", ordine.Id);
 

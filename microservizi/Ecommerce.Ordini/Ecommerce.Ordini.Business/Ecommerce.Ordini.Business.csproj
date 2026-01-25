@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <PackageReference Include="Ecommerce.Magazzino.ClientHttp" Version="1.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.12" />
     <PackageReference Include="Utility.Kafka" Version="1.0.0" />
   </ItemGroup>
