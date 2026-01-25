@@ -1,31 +1,40 @@
-name: Utility Kafka NuGet Publish
+name: Publish NuGet Packages
+
 on:
   push:
-    branches: [ main ]
+    branches: [ "main" ]
     paths:
       - 'librerie/Utility.Kafka/**'
+      - 'microservizi/Ecommerce.Magazzino/Ecommerce.Magazzino.ClientHttp/**'
+
+env:
+  NUGET_URL: https://nuget.pkg.github.com/akille-21/index.json
+  GITHUB_USER: akille-21 
+
 jobs:
-  build:
+  build-and-publish:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./librerie/Utility.Kafka
+    permissions:
+      contents: read
+      packages: write
+
     steps:
-    - uses: actions/checkout@v3
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v3
-      with:
-        dotnet-version: 9.0.x
-    - name: Restore dependencies
-      run: dotnet restore
-      env:
-        NUGET_USERNAME: ${{ secrets.NUGET_USERNAME }}
-        NUGET_TOKEN: ${{ secrets.NUGET_TOKEN }}
-    - name: Build and Pack
-      run: dotnet build --configuration Release --no-restore
-    - name: Push NuGet
-      run: |
-        dotnet nuget push bin/Release/*.nupkg \
-          --source "https://nuget.pkg.github.com/${{ secrets.NUGET_USERNAME }}/index.json" \
-          --api-key ${{ secrets.NUGET_TOKEN }} \
-          --skip-duplicate
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+          source-url: ${{ env.NUGET_URL }}
+        env:
+          NUGET_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pack & Push Utility.Kafka
+        run: |
+          dotnet pack librerie/Utility.Kafka/Utility.Kafka.csproj --configuration Release -o out_kafka
+          dotnet nuget push "./out_kafka/*.nupkg" --api-key ${{ secrets.GITHUB_TOKEN }} --source "github" --skip-duplicate
+
+      - name: Pack & Push Magazzino Client
+        run: |
+          dotnet pack microservizi/Ecommerce.Magazzino/Ecommerce.Magazzino.ClientHttp/Ecommerce.Magazzino.ClientHttp.csproj --configuration Release -o out_magazzino
+          dotnet nuget push "./out_magazzino/*.nupkg" --api-key ${{ secrets.GITHUB_TOKEN }} --source "github" --skip-duplicate
