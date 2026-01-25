@@ -1,0 +1,41 @@
+name: Docker Image Magazzino
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'microservizi/Ecommerce.Magazzino/**'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: akille-21/esameecommerce/ecommerce-magazzino
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write 
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./microservizi/Ecommerce.Magazzino
+          file: ./microservizi/Ecommerce.Magazzino/Ecommerce.Magazzino.Api/Dockerfile
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          build-args: |
+            NUGET_USERNAME=${{ secrets.NUGET_USERNAME }}
+            NUGET_TOKEN=${{ secrets.NUGET_TOKEN }}
