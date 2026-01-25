@@ -6,6 +6,7 @@ on:
     branches: [ "main" ]
     paths:
       - 'microservizi/Ecommerce.Ordini/**'
+      - '.github/workflows/docker-ordini.yml'
 
 env:
   REGISTRY: ghcr.io

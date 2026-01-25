@@ -77,7 +77,7 @@ services:
       - Kafka__ProducerClient__BootstrapServers=kafka:29092
       - MagazzinoClient__BaseUrl=http://ecommerce-magazzino:8080/
     ports:
-      - "5001:8080"
+      - "5002:8080"
     depends_on:
       - mssql-server
       - kafka

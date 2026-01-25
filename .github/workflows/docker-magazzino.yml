@@ -6,6 +6,7 @@ on:
     branches: [ "main" ]
     paths:
       - 'microservizi/Ecommerce.Magazzino/**'
+      - '.github/workflows/docker-magazzino.yml'
 
 env:
   REGISTRY: ghcr.io
