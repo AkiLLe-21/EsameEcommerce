@@ -1,40 +1,41 @@
 name: Publish NuGet Packages
-
 on:
+  workflow_dispatch:
   push:
-    branches: [ "main" ]
+    branches: [ main ]
     paths:
       - 'librerie/Utility.Kafka/**'
       - 'microservizi/Ecommerce.Magazzino/Ecommerce.Magazzino.ClientHttp/**'
 
-env:
-  NUGET_URL: https://nuget.pkg.github.com/akille-21/index.json
-  GITHUB_USER: akille-21 
-
 jobs:
-  build-and-publish:
+  build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-
     steps:
-      - uses: actions/checkout@v4
+    - uses: actions/checkout@v3
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: 9.0.x
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 9.0.x
-          source-url: ${{ env.NUGET_URL }}
-        env:
-          NUGET_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    # --- BLOCCO 1: KAFKA ---
+    - name: Pack Utility.Kafka
+      run: dotnet pack librerie/Utility.Kafka/Utility.Kafka.csproj --configuration Release --output out_kafka
 
-      - name: Pack & Push Utility.Kafka
-        run: |
-          dotnet pack librerie/Utility.Kafka/Utility.Kafka.csproj --configuration Release -o out_kafka
-          dotnet nuget push "./out_kafka/*.nupkg" --api-key ${{ secrets.GITHUB_TOKEN }} --source "github" --skip-duplicate
+    - name: Push Utility.Kafka
+      run: |
+        dotnet nuget push out_kafka/*.nupkg \
+          --source "https://nuget.pkg.github.com/${{ secrets.NUGET_USERNAME }}/index.json" \
+          --api-key ${{ secrets.NUGET_TOKEN }} \
+          --skip-duplicate
 
-      - name: Pack & Push Magazzino Client
-        run: |
-          dotnet pack microservizi/Ecommerce.Magazzino/Ecommerce.Magazzino.ClientHttp/Ecommerce.Magazzino.ClientHttp.csproj --configuration Release -o out_magazzino
-          dotnet nuget push "./out_magazzino/*.nupkg" --api-key ${{ secrets.GITHUB_TOKEN }} --source "github" --skip-duplicate
+    # --- BLOCCO 2: MAGAZZINO CLIENT (NUOVO) ---
+    - name: Pack Magazzino Client
+      run: dotnet pack microservizi/Ecommerce.Magazzino/Ecommerce.Magazzino.ClientHttp/Ecommerce.Magazzino.ClientHttp.csproj --configuration Release --output out_client
+
+    - name: Push Magazzino Client
+      run: |
+        dotnet nuget push out_client/*.nupkg \
+          --source "https://nuget.pkg.github.com/${{ secrets.NUGET_USERNAME }}/index.json" \
+          --api-key ${{ secrets.NUGET_TOKEN }} \
+          --skip-duplicate
