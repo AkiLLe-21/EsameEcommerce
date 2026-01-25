@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.12" />
+    <PackageReference Include="Utility.Kafka" Version="1.0.0" />
   </ItemGroup>
 
   <ItemGroup>

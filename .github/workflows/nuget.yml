@@ -19,13 +19,10 @@ jobs:
     # --- 1. KAFKA ---
     - name: Restore Kafka
       run: dotnet restore librerie/Utility.Kafka/Utility.Kafka.csproj
-
     - name: Build Kafka
       run: dotnet build librerie/Utility.Kafka/Utility.Kafka.csproj --configuration Release --no-restore
-
     - name: Pack Kafka
       run: dotnet pack librerie/Utility.Kafka/Utility.Kafka.csproj --configuration Release --no-build --output out_kafka
-
     - name: Push Kafka
       continue-on-error: true
       run: |
@@ -37,17 +34,30 @@ jobs:
     # --- 2. MAGAZZINO CLIENT ---
     - name: Restore Magazzino Client
       run: dotnet restore microservizi/Ecommerce.Magazzino/Ecommerce.Magazzino.ClientHttp/Ecommerce.Magazzino.ClientHttp.csproj
-
     - name: Build Magazzino Client
       run: dotnet build microservizi/Ecommerce.Magazzino/Ecommerce.Magazzino.ClientHttp/Ecommerce.Magazzino.ClientHttp.csproj --configuration Release --no-restore
-
     - name: Pack Magazzino Client
       run: dotnet pack microservizi/Ecommerce.Magazzino/Ecommerce.Magazzino.ClientHttp/Ecommerce.Magazzino.ClientHttp.csproj --configuration Release --no-build --output out_client
-
     - name: Push Magazzino Client
       continue-on-error: true
       run: |
         dotnet nuget push out_client/*.nupkg \
+          --source "https://nuget.pkg.github.com/${{ secrets.NUGET_USERNAME }}/index.json" \
+          --api-key ${{ secrets.NUGET_TOKEN }} \
+          --skip-duplicate
+
+
+    # --- 3. MAGAZZINO SHARED ---
+    - name: Restore Magazzino Shared
+      run: dotnet restore microservizi/Ecommerce.Magazzino/Ecommerce.Magazzino.Shared/Ecommerce.Magazzino.Shared.csproj
+    - name: Build Magazzino Shared
+      run: dotnet build microservizi/Ecommerce.Magazzino/Ecommerce.Magazzino.Shared/Ecommerce.Magazzino.Shared.csproj --configuration Release --no-restore
+    - name: Pack Magazzino Shared
+      run: dotnet pack microservizi/Ecommerce.Magazzino/Ecommerce.Magazzino.Shared/Ecommerce.Magazzino.Shared.csproj --configuration Release --no-build --output out_shared
+    - name: Push Magazzino Shared
+      continue-on-error: true
+      run: |
+        dotnet nuget push out_shared/*.nupkg \
           --source "https://nuget.pkg.github.com/${{ secrets.NUGET_USERNAME }}/index.json" \
           --api-key ${{ secrets.NUGET_TOKEN }} \
           --skip-duplicate
