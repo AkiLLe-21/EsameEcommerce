@@ -3,13 +3,11 @@ on:
   workflow_dispatch:
   push:
     branches: [ main ]
-    paths:
-      - 'librerie/Utility.Kafka/**'
-      - 'microservizi/Ecommerce.Magazzino/Ecommerce.Magazzino.ClientHttp/**'
 
 jobs:
-  build:
+  build-and-publish:
     runs-on: ubuntu-latest
+  
     steps:
     - uses: actions/checkout@v3
     
@@ -18,22 +16,36 @@ jobs:
       with:
         dotnet-version: 9.0.x
 
-    # --- BLOCCO 1: KAFKA ---
-    - name: Pack Utility.Kafka
-      run: dotnet pack librerie/Utility.Kafka/Utility.Kafka.csproj --configuration Release --output out_kafka
+    # --- 1. KAFKA ---
+    - name: Restore Kafka
+      run: dotnet restore librerie/Utility.Kafka/Utility.Kafka.csproj
 
-    - name: Push Utility.Kafka
+    - name: Build Kafka
+      run: dotnet build librerie/Utility.Kafka/Utility.Kafka.csproj --configuration Release --no-restore
+
+    - name: Pack Kafka
+      run: dotnet pack librerie/Utility.Kafka/Utility.Kafka.csproj --configuration Release --no-build --output out_kafka
+
+    - name: Push Kafka
+      continue-on-error: true
       run: |
         dotnet nuget push out_kafka/*.nupkg \
           --source "https://nuget.pkg.github.com/${{ secrets.NUGET_USERNAME }}/index.json" \
           --api-key ${{ secrets.NUGET_TOKEN }} \
           --skip-duplicate
 
-    # --- BLOCCO 2: MAGAZZINO CLIENT (NUOVO) ---
+    # --- 2. MAGAZZINO CLIENT ---
+    - name: Restore Magazzino Client
+      run: dotnet restore microservizi/Ecommerce.Magazzino/Ecommerce.Magazzino.ClientHttp/Ecommerce.Magazzino.ClientHttp.csproj
+
+    - name: Build Magazzino Client
+      run: dotnet build microservizi/Ecommerce.Magazzino/Ecommerce.Magazzino.ClientHttp/Ecommerce.Magazzino.ClientHttp.csproj --configuration Release --no-restore
+
     - name: Pack Magazzino Client
-      run: dotnet pack microservizi/Ecommerce.Magazzino/Ecommerce.Magazzino.ClientHttp/Ecommerce.Magazzino.ClientHttp.csproj --configuration Release --output out_client
+      run: dotnet pack microservizi/Ecommerce.Magazzino/Ecommerce.Magazzino.ClientHttp/Ecommerce.Magazzino.ClientHttp.csproj --configuration Release --no-build --output out_client
 
     - name: Push Magazzino Client
+      continue-on-error: true
       run: |
         dotnet nuget push out_client/*.nupkg \
           --source "https://nuget.pkg.github.com/${{ secrets.NUGET_USERNAME }}/index.json" \
