@@ -48,9 +48,9 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_ALLOW_EVERYONE_IF_NO_ACL_FOUND: "true"
 
-  magazzino-api:
+  ecommerce-magazzino:
     image: ghcr.io/akille-21/esameecommerce/ecommerce-magazzino:latest
-    container_name: magazzino-api
+    container_name: ecommerce-magazzino
     pull_policy: always
     ports:
       - "5001:8080" 
@@ -60,6 +60,30 @@ services:
     environment:
       - ConnectionStrings__MagazzinoDbContext=Server=mssql-server;Database=MagazzinoDb;User Id=sa;Password=p4ssw0rD;TrustServerCertificate=True;
       - ASPNETCORE_ENVIRONMENT=Development
+
+  ecommerce-ordini:
+    image: ghcr.io/akille-21/esameecommerce/ecommerce-ordini:latest
+    container_name: ecommerce-ordini
+    restart: on-failure
+    build:
+      context: ../
+      dockerfile: microservizi/Ecommerce.Ordini/Ecommerce.Ordini.Api/Dockerfile
+      args:
+        NUGET_USERNAME: ${NUGET_USERNAME}
+        NUGET_TOKEN: ${NUGET_TOKEN}
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__OrdiniDbContext=Server=mssql-server;Database=OrdiniDb;User Id=sa;Password=p4ssw0rD;TrustServerCertificate=True;
+      - Kafka__ProducerClient__BootstrapServers=kafka:29092
+      - MagazzinoClient__BaseUrl=http://ecommerce-magazzino:8080/
+    ports:
+      - "5001:8080"
+    depends_on:
+      - mssql-server
+      - kafka
+      - ecommerce-magazzino
+    networks:
+      - default
 
 volumes:
   sqlvolume:
