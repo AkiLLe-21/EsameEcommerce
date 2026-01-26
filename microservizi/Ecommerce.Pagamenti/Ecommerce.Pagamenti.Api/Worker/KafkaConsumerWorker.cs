@@ -40,18 +40,18 @@ public class KafkaConsumerWorker : BackgroundService
                     // Il messaggio di Ordini ha struttura { "Operation": "Create", "Dto": { ... } }
                     using var doc = JsonDocument.Parse(result.Message.Value);
                     var dtoElement = doc.RootElement.GetProperty("Dto");
-                    
+
                     // Estraiamo i dati che ci servono
                     int ordineId = dtoElement.GetProperty("Id").GetInt32();
                     int quantita = dtoElement.GetProperty("Quantita").GetInt32();
-                    // Simuliamo un prezzo fisso o calcolato (es. 10 euro a pezzo)
-                    decimal importo = quantita * 10.0m; 
+                    int prodottoId = dtoElement.GetProperty("ProdottoId").GetInt32(); // <--- Assicurati di estrarre questo!
+                    decimal importo = quantita * 10.0m;
 
                     // 3. Eseguiamo la logica Business (in uno scope nuovo)
                     using (var scope = _serviceProvider.CreateScope())
                     {
                         var business = scope.ServiceProvider.GetRequiredService<IBusiness>();
-                        await business.ProcessaPagamentoOrdineAsync(ordineId, importo, stoppingToken);
+                        await business.ProcessaPagamentoOrdineAsync(ordineId, prodottoId, quantita, importo, stoppingToken);
                     }
 
                     // 4. Confermiamo la lettura a Kafka

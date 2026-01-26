@@ -46,4 +46,17 @@ public class Business(IRepository repository, ILogger<Business> logger) : IBusin
         await repository.DecrementaQuantitaAsync(prodottoId, quantita, token);
         await repository.SaveChangesAsync(token); // Salviamo le modifiche su DB
     }
+
+    public async Task DecrementaQuantitaAsync(int prodottoId, int quantita, CancellationToken token = default) {
+        await repository.DecrementaQuantitaAsync(prodottoId, quantita, token);
+    }
+
+    public async Task CompensaOrdinaFallitoAsync(int prodottoId, int quantita, CancellationToken token = default) {
+        // Qui chiamiamo i metodi del repository che abbiamo aggiunto prima
+        var prodotto = await repository.GetProdottoByIdAsync(prodottoId, token);
+        if (prodotto != null) {
+            prodotto.QuantitaDisponibile += quantita; // Rollback
+            await repository.UpdateProdottoAsync(prodotto, token);
+        }
+    }
 }

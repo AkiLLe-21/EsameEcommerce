@@ -7,4 +7,6 @@ public interface IBusiness {
     Task<ProdottoDto?> GetProdottoAsync(int id, CancellationToken cancellationToken = default);
     Task<bool> CheckAvailabilityAsync(int id, int quantita, CancellationToken cancellationToken = default);
     Task AggiornaMagazzinoDaOrdineAsync(int prodottoId, int quantita, CancellationToken token = default);
+    Task CompensaOrdinaFallitoAsync(int prodottoId, int quantita, CancellationToken token = default);
+    Task DecrementaQuantitaAsync(int prodottoId, int quantita, CancellationToken token = default);
 }

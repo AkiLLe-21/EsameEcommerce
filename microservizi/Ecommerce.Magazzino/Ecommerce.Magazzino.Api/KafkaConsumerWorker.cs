@@ -1,80 +1,73 @@
 ﻿using System.Text.Json;
-using System.Text.Json.Nodes;
 using Ecommerce.Magazzino.Business.Abstraction;
 using Utility.Kafka.Abstractions.Clients;
-using Confluent.Kafka; // <--- FONDAMENTALE per ConsumeResult
 
 namespace Ecommerce.Magazzino.Api.Worker;
 
 public class KafkaConsumerWorker : BackgroundService {
+    // Nota: Anche qui usiamo <string, string> per coerenza
+    private readonly IConsumerClient<string, string> _consumerClient;
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<KafkaConsumerWorker> _logger;
-    private readonly IConsumerClient<string, string> _consumerClient;
 
     public KafkaConsumerWorker(
+        IConsumerClient<string, string> consumerClient,
         IServiceProvider serviceProvider,
-        ILogger<KafkaConsumerWorker> logger,
-        IConsumerClient<string, string> consumerClient) {
+        ILogger<KafkaConsumerWorker> logger) {
+        _consumerClient = consumerClient;
         _serviceProvider = serviceProvider;
         _logger = logger;
-        _consumerClient = consumerClient;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
-        // 1. Iscrizione
-        _consumerClient.Subscribe(new List<string> { "ordine-creato" });
-        _logger.LogInformation("Magazzino Worker: In ascolto su 'ordine-creato'...");
+        // Ci iscriviamo a DUE topic: 
+        // 1. ordine-creato (per scalare la merce)
+        // 2. pagamento-fallito (per rimettere la merce a posto - SAGA)
+        _consumerClient.Subscribe(new List<string> { "ordine-creato", "pagamento-fallito" });
+        _logger.LogInformation("Magazzino Worker: In ascolto su 'ordine-creato' e 'pagamento-fallito'...");
 
-        // 2. Loop Infinito
         while (!stoppingToken.IsCancellationRequested) {
             try {
-                // Proviamo a consumare.
+                // QUESTA RIGA È FONDAMENTALE: Dichiara 'result'
                 var result = await _consumerClient.ConsumeAsync(stoppingToken);
 
                 if (result != null && result.Message != null) {
-                    _logger.LogInformation($"Ricevuto messaggio Kafka: {result.Message.Value}");
+                    _logger.LogInformation($"Ricevuto messaggio su topic: {result.Topic}");
 
-                    await ProcessaMessaggioAsync(result.Message.Value, stoppingToken);
+                    using var doc = JsonDocument.Parse(result.Message.Value);
 
+                    using (var scope = _serviceProvider.CreateScope()) {
+                        var business = scope.ServiceProvider.GetRequiredService<IBusiness>();
+
+                        if (result.Topic == "ordine-creato") {
+                            // --- CASO 1: SCALO MERCE (Avanti) ---
+                            // Struttura Ordini: { "Operation":..., "Dto": { "ProdottoId": 1, ... } }
+                            if (doc.RootElement.TryGetProperty("Dto", out var dto)) {
+                                int id = dto.GetProperty("ProdottoId").GetInt32();
+                                int qta = dto.GetProperty("Quantita").GetInt32();
+
+                                await business.DecrementaQuantitaAsync(id, qta, stoppingToken);
+                                _logger.LogInformation($"Merce scalata: ID {id}, Qta {qta}");
+                            }
+                        } else if (result.Topic == "pagamento-fallito") {
+                            // --- CASO 2: SAGA ROLLBACK (Indietro) ---
+                            // Struttura Pagamenti: { "OrdineId":..., "ProdottoId": 1, "Quantita":... }
+                            // Qui è piatto, non c'è "Dto"
+                            int id = doc.RootElement.GetProperty("ProdottoId").GetInt32();
+                            int qta = doc.RootElement.GetProperty("Quantita").GetInt32();
+
+                            await business.CompensaOrdinaFallitoAsync(id, qta, stoppingToken);
+                            _logger.LogWarning($"SAGA COMPENSAZIONE: Restituita merce ID {id}, Qta {qta}");
+                        }
+                    }
+
+                    // Conferma lettura a Kafka
                     _consumerClient.Commit(result);
                 }
-            } catch (OperationCanceledException) {
-                // Chiusura
-                break;
             } catch (Exception ex) {
-                // 3. GESTIONE ERRORE (Retry Logic)
-                _logger.LogError($"Errore connessione Kafka (Riprovo tra 5s): {ex.Message}");
-
-                // Pausa di 5 secondi prima di riprovare
+                _logger.LogError(ex, "Errore worker magazzino");
+                // Piccolo ritardo per non bombardare il log se Kafka è giù
                 await Task.Delay(5000, stoppingToken);
-            }
-        }
-    }
-
-    private async Task ProcessaMessaggioAsync(string jsonMessage, CancellationToken token) {
-        using (var scope = _serviceProvider.CreateScope()) {
-            // Usiamo IBusiness per scalare la merce
-            var business = scope.ServiceProvider.GetRequiredService<IBusiness>();
-
-            try {
-                // Parsing del JSON
-                var rootNode = JsonNode.Parse(jsonMessage);
-                var dtoNode = rootNode?["Dto"];
-
-                if (dtoNode != null) {
-                    int pid = dtoNode["ProdottoId"]?.GetValue<int>() ?? 0;
-                    int qta = dtoNode["Quantita"]?.GetValue<int>() ?? 0;
-
-                    if (pid > 0 && qta > 0) {
-                        _logger.LogInformation($"Scalo {qta} pezzi dal prodotto {pid}...");
-
-                        await business.AggiornaMagazzinoDaOrdineAsync(pid, qta, token);
-
-                        _logger.LogInformation("Magazzino aggiornato con successo!");
-                    }
-                }
-            } catch (Exception ex) {
-                _logger.LogError(ex, "Errore elaborazione ordine: {Message}", ex.Message);
             }
         }
     }

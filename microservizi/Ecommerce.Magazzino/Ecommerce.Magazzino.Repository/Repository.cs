@@ -25,19 +25,25 @@ public class Repository(MagazzinoDbContext context) : IRepository {
     }
 
     // --- NUOVO METODO AGGIUNTO (Corretto) ---
-    public async Task DecrementaQuantitaAsync(int prodottoId, int quantitaDaScalare, CancellationToken token = default) {
-        // Usiamo 'context' invece di '_dbContext'
+    public async Task DecrementaQuantitaAsync(int prodottoId, int quantita, CancellationToken token = default) {
         var prodotto = await context.Prodotti.FindAsync(new object[] { prodottoId }, token);
 
+        // Se esiste e c'è abbastanza merce
         if (prodotto != null) {
-            // Usiamo 'QuantitaDisponibile' come fai negli altri metodi
-            prodotto.QuantitaDisponibile -= quantitaDaScalare;
-
-            // Sicurezza: non scendere sotto zero
-            if (prodotto.QuantitaDisponibile < 0)
-                prodotto.QuantitaDisponibile = 0;
-
-            // Non serve chiamare SaveChanges qui perché lo farà il Business
+            // (Opzionale: qui potresti lanciare eccezione se la qta < quantita, 
+            // ma per l'esame basta scalare se possibile)
+            if (prodotto.QuantitaDisponibile >= quantita) {
+                prodotto.QuantitaDisponibile -= quantita;
+                await context.SaveChangesAsync(token);
+            }
         }
+    }
+    public async Task<Prodotto?> GetProdottoByIdAsync(int id, CancellationToken token = default) {
+        return await context.Prodotti.FindAsync(new object[] { id }, token);
+    }
+
+    public async Task UpdateProdottoAsync(Prodotto prodotto, CancellationToken token = default) {
+        context.Prodotti.Update(prodotto);
+        await context.SaveChangesAsync(token);
     }
 }
