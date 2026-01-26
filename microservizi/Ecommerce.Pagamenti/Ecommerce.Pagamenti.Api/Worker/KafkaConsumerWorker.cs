@@ -37,14 +37,13 @@ public class KafkaConsumerWorker : BackgroundService
                     _logger.LogInformation($"Ricevuto ordine: {result.Message.Value}");
 
                     // 2. Deserializziamo il messaggio
-                    // Il messaggio di Ordini ha struttura { "Operation": "Create", "Dto": { ... } }
                     using var doc = JsonDocument.Parse(result.Message.Value);
                     var dtoElement = doc.RootElement.GetProperty("Dto");
 
                     // Estraiamo i dati che ci servono
                     int ordineId = dtoElement.GetProperty("Id").GetInt32();
                     int quantita = dtoElement.GetProperty("Quantita").GetInt32();
-                    int prodottoId = dtoElement.GetProperty("ProdottoId").GetInt32(); // <--- Assicurati di estrarre questo!
+                    int prodottoId = dtoElement.GetProperty("ProdottoId").GetInt32();
                     decimal importo = quantita * 10.0m;
 
                     // 3. Eseguiamo la logica Business (in uno scope nuovo)

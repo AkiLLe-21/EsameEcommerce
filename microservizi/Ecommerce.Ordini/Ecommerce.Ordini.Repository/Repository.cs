@@ -6,6 +6,7 @@ namespace Ecommerce.Ordini.Repository;
 public class Repository(OrdiniDbContext context) : IRepository {
     public async Task CreateOrdineAsync(Ordine ordine, CancellationToken cancellationToken = default) {
         await context.Ordini.AddAsync(ordine, cancellationToken);
+        await context.SaveChangesAsync(cancellationToken); 
     }
     public async Task<Ordine?> GetOrdineAsync(int id, CancellationToken cancellationToken = default) {
         return await context.Ordini.FindAsync([id], cancellationToken);
@@ -15,6 +16,7 @@ public class Repository(OrdiniDbContext context) : IRepository {
     }
     public async Task AggiungiOutboxAsync(OutboxMessage messaggio, CancellationToken token = default) {
         await context.OutboxMessages.AddAsync(messaggio, token);
+        await context.SaveChangesAsync(token);
     }
     public async Task UpdateStatoOrdineAsync(int id, string nuovoStato, CancellationToken token = default) {
         var ordine = await context.Ordini.FindAsync(new object[] { id }, token);
