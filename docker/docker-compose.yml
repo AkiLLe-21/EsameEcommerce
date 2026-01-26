@@ -60,6 +60,9 @@ services:
     environment:
       - ConnectionStrings__MagazzinoDbContext=Server=mssql-server;Database=MagazzinoDb;User Id=sa;Password=p4ssw0rD;TrustServerCertificate=True;
       - ASPNETCORE_ENVIRONMENT=Development
+      - Kafka__ConsumerClient__BootstrapServers=kafka:29092
+      - Kafka__ConsumerClient__GroupId=gruppo-magazzino-aggiornamento
+      - Kafka__ConsumerClient__AutoOffsetReset=Earliest
 
   ecommerce-ordini:
     image: ghcr.io/akille-21/esameecommerce/ecommerce-ordini:latest

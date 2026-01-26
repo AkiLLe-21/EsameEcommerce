@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Reflection.Emit;
 using Microsoft.EntityFrameworkCore;
-using Ecommerce.Magazzino.Repository.Model;
 
 namespace Ecommerce.Magazzino.Repository;
 

@@ -3,6 +3,9 @@ using Ecommerce.Magazzino.Business;
 using Ecommerce.Magazzino.Repository.Abstraction;
 using Ecommerce.Magazzino.Repository;
 using Microsoft.EntityFrameworkCore;
+using Utility.Kafka.Abstractions.Clients;
+using Utility.Kafka.Clients;
+using Ecommerce.Magazzino.Api.Worker;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +18,10 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<MagazzinoDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("MagazzinoDbContext"),
     b => b.MigrationsAssembly("Ecommerce.Magazzino.Api")));
+
+builder.Services.Configure<KafkaConsumerClientOptions>(builder.Configuration.GetSection("Kafka:ConsumerClient"));
+builder.Services.AddSingleton<IConsumerClient<string, string>, ConsumerClient>();
+builder.Services.AddHostedService<KafkaConsumerWorker>();
 
 // Dependency Injection
 builder.Services.AddScoped<IRepository, Repository>();

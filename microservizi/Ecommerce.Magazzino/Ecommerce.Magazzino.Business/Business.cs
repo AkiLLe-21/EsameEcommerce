@@ -37,8 +37,13 @@ public class Business(IRepository repository, ILogger<Business> logger) : IBusin
         };
     }
 
-
     public async Task<bool> CheckAvailabilityAsync(int id, int quantita, CancellationToken cancellationToken = default) {
         return await repository.CheckDisponibilitaAsync(id, quantita, cancellationToken);
+    }
+
+    public async Task AggiornaMagazzinoDaOrdineAsync(int prodottoId, int quantita, CancellationToken token = default) {
+        // Qui richiamiamo il repository
+        await repository.DecrementaQuantitaAsync(prodottoId, quantita, token);
+        await repository.SaveChangesAsync(token); // Salviamo le modifiche su DB
     }
 }
