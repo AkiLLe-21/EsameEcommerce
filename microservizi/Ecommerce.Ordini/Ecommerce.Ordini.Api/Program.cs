@@ -3,10 +3,9 @@ using Ecommerce.Ordini.Business;
 using Ecommerce.Ordini.Business.Abstraction;
 using Ecommerce.Ordini.Repository;
 using Ecommerce.Ordini.Repository.Abstraction;
-using Ecommerce.Ordini.Repository.Model;
-using Utility.Kafka.Messages;
 using Utility.Kafka.Abstractions.Clients;
 using Utility.Kafka.Clients;
+using Ecommerce.Ordini.Api.Worker;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,6 +21,7 @@ builder.Services.AddDbContext<OrdiniDbContext>(options =>
 // 2. Kafka (Producer)
 builder.Services.Configure<KafkaProducerClientOptions>(builder.Configuration.GetSection("Kafka:ProducerClient"));
 builder.Services.AddSingleton<IProducerClient<string, string>, ProducerClient>();
+builder.Services.AddHostedService<OutboxPublisherWorker>();
 
 // 3. Client HTTP Magazzino
 // Questo extension method viene dal pacchetto NuGet "Ecommerce.Magazzino.ClientHttp"

@@ -1,65 +1,49 @@
-﻿using Microsoft.Extensions.Logging;
-using Ecommerce.Ordini.Business.Abstraction;
+﻿using Ecommerce.Ordini.Business.Abstraction;
 using Ecommerce.Ordini.Repository.Abstraction;
 using Ecommerce.Ordini.Repository.Model;
 using Ecommerce.Ordini.Shared;
-using Ecommerce.Magazzino.ClientHttp.Abstraction;
-using Utility.Kafka.Abstractions.Clients;
-using Utility.Kafka.Constants;
-using Utility.Kafka.Messages;
 using System.Text.Json;
 
 namespace Ecommerce.Ordini.Business;
 
-public class Business(
-    IRepository repository,
-    IMagazzinoClient magazzinoClient,
-    IProducerClient<string, string> producerClient, // Client puro stringa/stringa
-    ILogger<Business> logger
-    ) : IBusiness {
-    public async Task<OrdineDto?> CreateOrdineAsync(OrdineDto dto, CancellationToken cancellationToken = default) {
-        logger.LogInformation("Ricevuta richiesta ordine per prodotto {Id}", dto.ProdottoId);
-
-        // 1. Check Disponibilità
-        bool disponibile = await magazzinoClient.CheckAvailabilityAsync(dto.ProdottoId, dto.Quantita, cancellationToken);
-
-        if (!disponibile) {
-            logger.LogWarning("Prodotto {Id} non disponibile.", dto.ProdottoId);
-            return null;
-        }
-
-        // 2. Salva Ordine
+public class Business(IRepository repository) : IBusiness {
+    public async Task<OrdineDto?> CreateOrdineAsync(OrdineDto dto, CancellationToken token = default) {
+        // 1. Creiamo l'Entità dal DTO
         var ordine = new Ordine {
             ProdottoId = dto.ProdottoId,
             Quantita = dto.Quantita,
-            DataCreazione = DateTime.UtcNow,
-            Stato = "Creato"
+            Stato = "Creato",
+            DataCreazione = DateTime.UtcNow
         };
 
-        await repository.CreateOrdineAsync(ordine, cancellationToken);
-        await repository.SaveChangesAsync(cancellationToken);
+        // Aggiungiamo al contesto (ma non salviamo ancora)
+        await repository.CreateOrdineAsync(ordine, token);
 
-        // 3. Invia messaggio Kafka
-        var messageObj = new OperationMessage<Ordine> {
+        // 2. Outbox Pattern
+        var evento = new {
             Operation = "Create",
-            Dto = ordine
+            Dto = ordine // Serializziamo l'ordine completo
         };
 
-        string jsonMessage = JsonSerializer.Serialize(messageObj);
+        var outboxMsg = new OutboxMessage {
+            Topic = "ordine-creato",
+            Payload = JsonSerializer.Serialize(evento),
+            DataCreazione = DateTime.UtcNow,
+            DataProcessato = null
+        };
 
-        await producerClient.ProduceAsync(
-            "ordine-creato",          // Topic
-            ordine.Id.ToString(),     // Key (Nuovo parametro mancante!)
-            jsonMessage,              // Value (Messaggio JSON)
-            cancellationToken         // Token
-        );
+        await repository.AggiungiOutboxAsync(outboxMsg, token);
 
-        logger.LogInformation("Ordine {Id} creato e notificato su Kafka", ordine.Id);
+        // 3. Salvataggio Atomico (Transazione implicita)
+        await repository.SaveChangesAsync(token);
 
-        dto.Id = ordine.Id;
-        dto.Stato = ordine.Stato;
-        dto.DataCreazione = ordine.DataCreazione;
-
-        return dto;
+        // 4. MAPPING DI RITORNO (Fix dell'errore)
+        return new OrdineDto {
+            Id = ordine.Id,
+            ProdottoId = ordine.ProdottoId,
+            Quantita = ordine.Quantita,
+            Stato = ordine.Stato,
+            DataCreazione = ordine.DataCreazione
+        };
     }
 }
