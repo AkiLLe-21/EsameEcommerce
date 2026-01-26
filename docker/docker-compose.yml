@@ -98,5 +98,26 @@ services:
     networks:
       - default
 
+  ecommerce-pagamenti:
+    image: ecommerce-pagamenti:latest
+    container_name: ecommerce-pagamenti
+    build:
+      context: ../
+      dockerfile: microservizi/Ecommerce.Pagamenti/Ecommerce.Pagamenti.Api/Dockerfile
+    ports:
+      - "5003:8080"
+    depends_on:
+      mssql-server:
+        condition: service_started
+      kafka:
+        condition: service_healthy
+    environment:
+      - ConnectionStrings__PagamentiDbContext=Server=mssql-server;Database=PagamentiDb;User Id=sa;Password=p4ssw0rD;TrustServerCertificate=True;
+      - ASPNETCORE_ENVIRONMENT=Development
+      - Kafka__ConsumerClient__BootstrapServers=kafka:29092
+      - Kafka__ConsumerClient__GroupId=gruppo-pagamenti
+      - Kafka__ConsumerClient__AutoOffsetReset=Earliest
+      - Kafka__ProducerClient__BootstrapServers=kafka:29092
+
 volumes:
   sqlvolume:
