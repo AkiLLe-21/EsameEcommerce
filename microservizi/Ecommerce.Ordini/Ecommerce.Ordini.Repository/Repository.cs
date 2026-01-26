@@ -16,4 +16,11 @@ public class Repository(OrdiniDbContext context) : IRepository {
     public async Task AggiungiOutboxAsync(OutboxMessage messaggio, CancellationToken token = default) {
         await context.OutboxMessages.AddAsync(messaggio, token);
     }
+    public async Task UpdateStatoOrdineAsync(int id, string nuovoStato, CancellationToken token = default) {
+        var ordine = await context.Ordini.FindAsync(new object[] { id }, token);
+        if (ordine != null) {
+            ordine.Stato = nuovoStato;
+            await context.SaveChangesAsync(token);
+        }
+    }
 }

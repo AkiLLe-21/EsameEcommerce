@@ -18,10 +18,16 @@ builder.Services.AddDbContext<OrdiniDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("OrdiniDbContext"),
     b => b.MigrationsAssembly("Ecommerce.Ordini.Api")));
 
-// 2. Kafka (Producer)
+// 2. Kafka
 builder.Services.Configure<KafkaProducerClientOptions>(builder.Configuration.GetSection("Kafka:ProducerClient"));
 builder.Services.AddSingleton<IProducerClient<string, string>, ProducerClient>();
 builder.Services.AddHostedService<OutboxPublisherWorker>();
+
+builder.Services.Configure<KafkaConsumerClientOptions>(builder.Configuration.GetSection("Kafka:ConsumerClient"));
+builder.Services.AddSingleton<IConsumerClient<string, string>, ConsumerClient>();
+
+builder.Services.AddHostedService<OutboxPublisherWorker>(); // Esistente
+builder.Services.AddHostedService<KafkaPagamentiConsumerWorker>(); // <--- NUOVO WORKER
 
 // 3. Client HTTP Magazzino
 // Questo extension method viene dal pacchetto NuGet "Ecommerce.Magazzino.ClientHttp"

@@ -7,4 +7,5 @@ public interface IRepository {
     Task<Ordine?> GetOrdineAsync(int id, CancellationToken cancellationToken = default);
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     Task AggiungiOutboxAsync(OutboxMessage messaggio, CancellationToken token = default);
+    Task UpdateStatoOrdineAsync(int id, string nuovoStato, CancellationToken token = default);
 }
