@@ -1,23 +1,15 @@
-# Usa l'immagine base per l'esecuzione
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
 USER app
 WORKDIR /app
 EXPOSE 8080
 EXPOSE 8081
 
-# Usa l'immagine SDK per la compilazione
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
-
-# --- INIZIO BLOCCO CRITICO ---
-# Riceve i valori dalla GitHub Action
 ARG NUGET_USERNAME
 ARG NUGET_TOKEN
 ARG BUILD_CONFIGURATION=Release
-
-# Imposta le variabili d'ambiente che NuGet.config leggerà
 ENV NUGET_USERNAME=$NUGET_USERNAME
 ENV NUGET_TOKEN=$NUGET_TOKEN
-# --- FINE BLOCCO CRITICO ---
 
 WORKDIR /src
 
@@ -34,11 +26,10 @@ COPY ["Ecommerce.Magazzino.Shared/Ecommerce.Magazzino.Shared.csproj", "Ecommerce
 # Restore
 RUN dotnet restore "./Ecommerce.Magazzino.Api/Ecommerce.Magazzino.Api.csproj"
 
-# Copia tutto il resto
+
+
 COPY . .
 WORKDIR "/src/Ecommerce.Magazzino.Api"
-
-# Build con --no-restore
 RUN dotnet build "./Ecommerce.Magazzino.Api.csproj" -c $BUILD_CONFIGURATION -o /app/build --no-restore
 
 FROM build AS publish

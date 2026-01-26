@@ -4,19 +4,31 @@ WORKDIR /app
 EXPOSE 8080
 
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+ARG NUGET_USERNAME
+ARG NUGET_TOKEN
 ARG BUILD_CONFIGURATION=Release
-WORKDIR /src
-COPY ["microservizi/Ecommerce.Pagamenti/Ecommerce.Pagamenti.Api/Ecommerce.Pagamenti.Api.csproj", "microservizi/Ecommerce.Pagamenti/Ecommerce.Pagamenti.Api/"]
-COPY ["microservizi/Ecommerce.Pagamenti/Ecommerce.Pagamenti.Business/Ecommerce.Pagamenti.Business.csproj", "microservizi/Ecommerce.Pagamenti/Ecommerce.Pagamenti.Business/"]
-COPY ["microservizi/Ecommerce.Pagamenti/Ecommerce.Pagamenti.Business.Abstraction/Ecommerce.Pagamenti.Business.Abstraction.csproj", "microservizi/Ecommerce.Pagamenti/Ecommerce.Pagamenti.Business.Abstraction/"]
-COPY ["microservizi/Ecommerce.Pagamenti/Ecommerce.Pagamenti.Repository/Ecommerce.Pagamenti.Repository.csproj", "microservizi/Ecommerce.Pagamenti/Ecommerce.Pagamenti.Repository/"]
-COPY ["microservizi/Ecommerce.Pagamenti/Ecommerce.Pagamenti.Repository.Abstraction/Ecommerce.Pagamenti.Repository.Abstraction.csproj", "microservizi/Ecommerce.Pagamenti/Ecommerce.Pagamenti.Repository.Abstraction/"]
-COPY ["librerie/Utility.Kafka/Utility.Kafka.csproj", "librerie/Utility.Kafka/"]
+ENV NUGET_USERNAME=$NUGET_USERNAME
+ENV NUGET_TOKEN=$NUGET_TOKEN
 
-RUN dotnet restore "./microservizi/Ecommerce.Pagamenti/Ecommerce.Pagamenti.Api/Ecommerce.Pagamenti.Api.csproj"
+WORKDIR /src
+
+# 1. Copia il config che abbiamo appena creato (fondamentale!)
+COPY ["NuGet.config", "."]
+
+# 2. Copia i file di progetto (i path sono relativi al Context, cioè la cartella Pagamenti)
+COPY ["Ecommerce.Pagamenti.Api/Ecommerce.Pagamenti.Api.csproj", "Ecommerce.Pagamenti.Api/"]
+COPY ["Ecommerce.Pagamenti.Business/Ecommerce.Pagamenti.Business.csproj", "Ecommerce.Pagamenti.Business/"]
+COPY ["Ecommerce.Pagamenti.Business.Abstraction/Ecommerce.Pagamenti.Business.Abstraction.csproj", "Ecommerce.Pagamenti.Business.Abstraction/"]
+COPY ["Ecommerce.Pagamenti.Repository/Ecommerce.Pagamenti.Repository.csproj", "Ecommerce.Pagamenti.Repository/"]
+COPY ["Ecommerce.Pagamenti.Repository.Abstraction/Ecommerce.Pagamenti.Repository.Abstraction.csproj", "Ecommerce.Pagamenti.Repository.Abstraction/"]
+
+# 3. Restore usando le credenziali (scaricherà Utility.Kafka da GitHub Packages)
+RUN dotnet restore "./Ecommerce.Pagamenti.Api/Ecommerce.Pagamenti.Api.csproj"
+
+
 COPY . .
-WORKDIR "/src/microservizi/Ecommerce.Pagamenti/Ecommerce.Pagamenti.Api"
-RUN dotnet build "./Ecommerce.Pagamenti.Api.csproj" -c $BUILD_CONFIGURATION -o /app/build
+WORKDIR "/src/Ecommerce.Pagamenti.Api"
+RUN dotnet build "./Ecommerce.Pagamenti.Api.csproj" -c $BUILD_CONFIGURATION -o /app/build --no-restore
 
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
