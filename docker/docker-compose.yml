@@ -74,13 +74,11 @@ services:
   ecommerce-ordini:
     image: ghcr.io/akille-21/esameecommerce/ecommerce-ordini:latest
     container_name: ecommerce-ordini
+    pull_policy: always
     restart: on-failure
     build:
       context: ../
       dockerfile: microservizi/Ecommerce.Ordini/Ecommerce.Ordini.Api/Dockerfile
-      args:
-        NUGET_USERNAME: ${NUGET_USERNAME}
-        NUGET_TOKEN: ${NUGET_TOKEN}
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ConnectionStrings__OrdiniDbContext=Server=mssql-server;Database=OrdiniDb;User Id=sa;Password=p4ssw0rD;TrustServerCertificate=True;
@@ -101,13 +99,11 @@ services:
   ecommerce-pagamenti:
     image: ghcr.io/akille-21/esameecommerce/ecommerce-pagamenti:latest
     container_name: ecommerce-pagamenti
+    pull_policy: always
     restart: on-failure
     build:
       context: ../
       dockerfile: microservizi/Ecommerce.Pagamenti/Ecommerce.Pagamenti.Api/Dockerfile
-      args:
-        NUGET_USERNAME: ${NUGET_USERNAME}
-        NUGET_TOKEN: ${NUGET_TOKEN}
     ports:
       - "5003:8080"
     depends_on:
