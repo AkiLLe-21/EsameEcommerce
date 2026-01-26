@@ -46,4 +46,8 @@ public class Business(IRepository repository) : IBusiness {
             DataCreazione = ordine.DataCreazione
         };
     }
+
+    public async Task AggiornaStatoOrdineAsync(int id, string stato, CancellationToken token = default) {
+        await repository.UpdateStatoOrdineAsync(id, stato, token);
+    }
 }
