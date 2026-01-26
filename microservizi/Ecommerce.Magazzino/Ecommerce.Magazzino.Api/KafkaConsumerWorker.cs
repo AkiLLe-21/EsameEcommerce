@@ -21,28 +21,33 @@ public class KafkaConsumerWorker : BackgroundService {
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
-        // 1. Iscrizione al topic
+        // 1. Iscrizione
         _consumerClient.Subscribe(new List<string> { "ordine-creato" });
         _logger.LogInformation("Magazzino Worker: In ascolto su 'ordine-creato'...");
 
-        try {
-            while (!stoppingToken.IsCancellationRequested) {
+        // 2. Loop Infinito
+        while (!stoppingToken.IsCancellationRequested) {
+            try {
+                // Proviamo a consumare.
                 var result = await _consumerClient.ConsumeAsync(stoppingToken);
 
                 if (result != null && result.Message != null) {
                     _logger.LogInformation($"Ricevuto messaggio Kafka: {result.Message.Value}");
 
-                    // 3. Elaborazione
                     await ProcessaMessaggioAsync(result.Message.Value, stoppingToken);
 
-                    // 4. Commit
                     _consumerClient.Commit(result);
                 }
+            } catch (OperationCanceledException) {
+                // Chiusura
+                break;
+            } catch (Exception ex) {
+                // 3. GESTIONE ERRORE (Retry Logic)
+                _logger.LogError($"Errore connessione Kafka (Riprovo tra 5s): {ex.Message}");
+
+                // Pausa di 5 secondi prima di riprovare
+                await Task.Delay(5000, stoppingToken);
             }
-        } catch (OperationCanceledException) {
-            // Stop richiesto, tutto ok
-        } catch (Exception ex) {
-            _logger.LogError(ex, "Errore critico nel consumer Kafka");
         }
     }
 

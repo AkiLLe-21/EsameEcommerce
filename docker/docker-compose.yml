@@ -47,6 +47,11 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_ALLOW_EVERYONE_IF_NO_ACL_FOUND: "true"
+    healthcheck:
+      test: nc -z localhost 9092 || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   ecommerce-magazzino:
     image: ghcr.io/akille-21/esameecommerce/ecommerce-magazzino:latest
@@ -55,8 +60,10 @@ services:
     ports:
       - "5001:8080" 
     depends_on:
-      - mssql-server
-      - kafka
+      mssql-server:
+        condition: service_started
+      kafka:
+        condition: service_healthy
     environment:
       - ConnectionStrings__MagazzinoDbContext=Server=mssql-server;Database=MagazzinoDb;User Id=sa;Password=p4ssw0rD;TrustServerCertificate=True;
       - ASPNETCORE_ENVIRONMENT=Development
@@ -82,9 +89,12 @@ services:
     ports:
       - "5002:8080"
     depends_on:
-      - mssql-server
-      - kafka
-      - ecommerce-magazzino
+      mssql-server:
+        condition: service_started
+      kafka:
+        condition: service_healthy
+      ecommerce-magazzino:
+        condition: service_started
     networks:
       - default
 
