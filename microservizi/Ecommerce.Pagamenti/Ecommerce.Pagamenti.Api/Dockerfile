@@ -18,9 +18,9 @@ COPY ["NuGet.config", "."]
 # 2. Copia i file di progetto (i path sono relativi al Context, cioè la cartella Pagamenti)
 COPY ["Ecommerce.Pagamenti.Api/Ecommerce.Pagamenti.Api.csproj", "Ecommerce.Pagamenti.Api/"]
 COPY ["Ecommerce.Pagamenti.Business/Ecommerce.Pagamenti.Business.csproj", "Ecommerce.Pagamenti.Business/"]
-COPY ["Ecommerce.Pagamenti.Business.Abstraction/Ecommerce.Pagamenti.Business.Abstraction.csproj", "Ecommerce.Pagamenti.Business.Abstraction/"]
+COPY ["Ecommerce.Pagamenti.ClientHttp/Ecommerce.Pagamenti.ClientHttp.csproj", "Ecommerce.Pagamenti.ClientHttp/"]
 COPY ["Ecommerce.Pagamenti.Repository/Ecommerce.Pagamenti.Repository.csproj", "Ecommerce.Pagamenti.Repository/"]
-COPY ["Ecommerce.Pagamenti.Repository.Abstraction/Ecommerce.Pagamenti.Repository.Abstraction.csproj", "Ecommerce.Pagamenti.Repository.Abstraction/"]
+COPY ["Ecommerce.Pagamenti.Shared/Ecommerce.Pagamenti.Shared.csproj", "Ecommerce.Pagamenti.Shared/"]
 
 # 3. Restore usando le credenziali (scaricherà Utility.Kafka da GitHub Packages)
 RUN dotnet restore "./Ecommerce.Pagamenti.Api/Ecommerce.Pagamenti.Api.csproj"
