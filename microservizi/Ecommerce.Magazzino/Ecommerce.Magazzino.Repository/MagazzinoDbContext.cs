@@ -7,6 +7,7 @@ namespace Ecommerce.Magazzino.Repository;
 
 public class MagazzinoDbContext(DbContextOptions<MagazzinoDbContext> options) : DbContext(options) {
     public DbSet<Prodotto> Prodotti { get; set; }
+    public DbSet<OutboxMessage> OutboxMessages { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder) {
         modelBuilder.Entity<Prodotto>().HasKey(x => x.Id);

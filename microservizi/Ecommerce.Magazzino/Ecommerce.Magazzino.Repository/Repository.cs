@@ -1,10 +1,10 @@
-﻿using Ecommerce.Magazzino.Repository.Abstraction;
+﻿using System.Text.Json;
+using Ecommerce.Magazzino.Repository.Abstraction;
 using Ecommerce.Magazzino.Repository.Model;
 using Microsoft.EntityFrameworkCore;
 
 namespace Ecommerce.Magazzino.Repository;
 
-// Nota: Qui usiamo 'context' definita nel costruttore primario
 public class Repository(MagazzinoDbContext context) : IRepository {
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default) {
         return await context.SaveChangesAsync(cancellationToken);
@@ -24,20 +24,47 @@ public class Repository(MagazzinoDbContext context) : IRepository {
         return prodotto.QuantitaDisponibile >= quantitaRichiesta;
     }
 
-    // --- NUOVO METODO AGGIUNTO (Corretto) ---
     public async Task DecrementaQuantitaAsync(int prodottoId, int quantita, CancellationToken token = default) {
         var prodotto = await context.Prodotti.FindAsync(new object[] { prodottoId }, token);
 
-        // Se esiste e c'è abbastanza merce
         if (prodotto != null) {
-            // (Opzionale: qui potresti lanciare eccezione se la qta < quantita, 
-            // ma per l'esame basta scalare se possibile)
+            // 1. Decremento 
             if (prodotto.QuantitaDisponibile >= quantita) {
                 prodotto.QuantitaDisponibile -= quantita;
+
+                // --- 2. Controllo Sotto Scorta ---
+                if (prodotto.QuantitaDisponibile < prodotto.SogliaMinima) {
+                    var evento = new {
+                        ProdottoId = prodotto.Id,
+                        QuantitaRichiesta = prodotto.QuantitaRiordino, // Usiamo la qta configurata
+                        Data = DateTime.UtcNow
+                    };
+
+                    var outbox = new OutboxMessage {
+                        Topic = "sotto-scorta",
+                        Payload = JsonSerializer.Serialize(evento),
+                        DataCreazione = DateTime.UtcNow
+                    };
+
+                    await context.OutboxMessages.AddAsync(outbox, token);
+                }
+
+                // 3. Salvataggio Atomico
                 await context.SaveChangesAsync(token);
             }
         }
     }
+
+    public async Task IncrementaQuantitaAsync(int prodottoId, int quantita, CancellationToken token = default) {
+        var prodotto = await context.Prodotti.FindAsync(new object[] { prodottoId }, token);
+
+        if (prodotto != null) {
+            prodotto.QuantitaDisponibile += quantita;
+            context.Prodotti.Update(prodotto);
+            await context.SaveChangesAsync(token);
+        }
+    }
+
     public async Task<Prodotto?> GetProdottoByIdAsync(int id, CancellationToken token = default) {
         return await context.Prodotti.FindAsync(new object[] { id }, token);
     }

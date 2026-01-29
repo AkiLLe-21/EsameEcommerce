@@ -9,6 +9,7 @@ public class Prodotto {
 
     [Column(TypeName = "decimal(18,2)")]
     public decimal Prezzo { get; set; }
-
     public int QuantitaDisponibile { get; set; }
+    public int SogliaMinima { get; set; }
+    public int QuantitaRiordino { get; set; }
 }

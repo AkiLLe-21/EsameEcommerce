@@ -26,11 +26,10 @@ builder.Services.AddHostedService<OutboxPublisherWorker>();
 builder.Services.Configure<KafkaConsumerClientOptions>(builder.Configuration.GetSection("Kafka:ConsumerClient"));
 builder.Services.AddSingleton<IConsumerClient<string, string>, ConsumerClient>();
 
-builder.Services.AddHostedService<OutboxPublisherWorker>(); // Esistente
-builder.Services.AddHostedService<KafkaPagamentiConsumerWorker>(); // <--- NUOVO WORKER
+builder.Services.AddHostedService<OutboxPublisherWorker>();
+builder.Services.AddHostedService<KafkaPagamentiConsumerWorker>();
 
 // 3. Client HTTP Magazzino
-// Questo extension method viene dal pacchetto NuGet "Ecommerce.Magazzino.ClientHttp"
 builder.Services.AddMagazzinoClient(builder.Configuration);
 
 // 4. DI

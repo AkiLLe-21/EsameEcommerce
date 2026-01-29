@@ -50,6 +50,9 @@ public class Business(IRepository repository, ILogger<Business> logger) : IBusin
     public async Task DecrementaQuantitaAsync(int prodottoId, int quantita, CancellationToken token = default) {
         await repository.DecrementaQuantitaAsync(prodottoId, quantita, token);
     }
+    public async Task IncrementaQuantitaAsync(int prodottoId, int quantita, CancellationToken token = default) {
+        await repository.IncrementaQuantitaAsync(prodottoId, quantita, token);
+    }
 
     public async Task CompensaOrdinaFallitoAsync(int prodottoId, int quantita, CancellationToken token = default) {
         // Qui chiamiamo i metodi del repository che abbiamo aggiunto prima

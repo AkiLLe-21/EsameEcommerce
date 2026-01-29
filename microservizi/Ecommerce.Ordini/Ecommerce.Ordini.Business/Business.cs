@@ -14,7 +14,6 @@ public class Business(IRepository repository) : IBusiness {
             Quantita = dto.Quantita,
             Stato = "Creato",
             DataCreazione = DateTime.UtcNow
-            // Nota: Id è 0 qui
         };
 
         await repository.CreateOrdineAsync(ordine, cancellationToken);
@@ -22,11 +21,11 @@ public class Business(IRepository repository) : IBusiness {
         var evento = new {
             Operation = "Create",
             Dto = new {
-                Id = ordine.Id,
-                ProdottoId = ordine.ProdottoId,
-                Quantita = ordine.Quantita,
-                Stato = ordine.Stato,
-                DataCreazione = ordine.DataCreazione
+                ordine.Id,
+                ordine.ProdottoId,
+                ordine.Quantita,
+                ordine.Stato,
+                ordine.DataCreazione
             }
         };
 

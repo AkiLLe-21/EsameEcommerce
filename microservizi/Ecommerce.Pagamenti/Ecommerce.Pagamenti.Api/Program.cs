@@ -13,19 +13,14 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<PagamentiDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("PagamentiDbContext")));
 
-// 2. KAFKA CONFIGURATION (Manuale, stile Ordini)
-
-// A) Configurazione Producer (Per inviare l'esito)
-// Legge la sezione "Kafka:ProducerClient" dal docker-compose
+// 2. KAFKA CONFIGURATION
 builder.Services.Configure<KafkaProducerClientOptions>(builder.Configuration.GetSection("Kafka:ProducerClient"));
 builder.Services.AddSingleton<IProducerClient<string, string>, ProducerClient>();
 
-// B) Configurazione Consumer (Per ascoltare gli ordini)
-// Legge la sezione "Kafka:ConsumerClient" dal docker-compose
 builder.Services.Configure<KafkaConsumerClientOptions>(builder.Configuration.GetSection("Kafka:ConsumerClient"));
 builder.Services.AddSingleton<IConsumerClient<string, string>, ConsumerClient>();
 
-// 3. DI (Business & Repository)
+// 3. Business & Repository
 builder.Services.AddScoped<IRepository, Repository>();
 builder.Services.AddScoped<IBusiness, Business>();
 

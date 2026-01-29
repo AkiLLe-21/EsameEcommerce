@@ -9,4 +9,5 @@ public interface IBusiness {
     Task AggiornaMagazzinoDaOrdineAsync(int prodottoId, int quantita, CancellationToken token = default);
     Task CompensaOrdinaFallitoAsync(int prodottoId, int quantita, CancellationToken token = default);
     Task DecrementaQuantitaAsync(int prodottoId, int quantita, CancellationToken token = default);
+    Task IncrementaQuantitaAsync(int prodottoId, int quantita, CancellationToken token = default);
 }
