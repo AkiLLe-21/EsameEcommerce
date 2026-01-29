@@ -37,6 +37,20 @@ services:
       - zookeeper
     ports:
       - "9092:9092"
+    entrypoint: [ '/bin/sh', '-c' ]
+    command: |
+      "
+      # Blocco finché Kafka non risponde (sicurezza extra)
+      echo -e 'Attendo Kafka...'
+      cub kafka-ready -b kafka:29092 1 30
+
+      echo -e 'Creazione topic in corso...'
+      
+      kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic ordine-creato --partitions 1 --replication-factor 1
+      kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic pagamento-fallito --partitions 1 --replication-factor 1
+      kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic sotto-scorta --partitions 1 --replication-factor 1
+      kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic rifornimento-arrivato --partitions 1 --replication-factor 1
+      "
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
@@ -64,6 +78,8 @@ services:
         condition: service_started
       kafka:
         condition: service_healthy
+      kafka-init:                        
+        condition: service_completed_successfully
     environment:
       - ConnectionStrings__MagazzinoDbContext=Server=mssql-server;Database=MagazzinoDb;User Id=sa;Password=p4ssw0rD;TrustServerCertificate=True;
       - ASPNETCORE_ENVIRONMENT=Development
@@ -95,6 +111,8 @@ services:
         condition: service_started
       kafka:
         condition: service_healthy
+      kafka-init:                        
+        condition: service_completed_successfully
       ecommerce-magazzino:
         condition: service_started
     networks:
@@ -115,6 +133,8 @@ services:
         condition: service_started
       kafka:
         condition: service_healthy
+      kafka-init:                        
+        condition: service_completed_successfully
     environment:
       - ConnectionStrings__PagamentiDbContext=Server=mssql-server;Database=PagamentiDb;User Id=sa;Password=p4ssw0rD;TrustServerCertificate=True;
       - ASPNETCORE_ENVIRONMENT=Development
@@ -138,6 +158,8 @@ services:
         condition: service_started
       kafka:
         condition: service_healthy
+      kafka-init:                        
+        condition: service_completed_successfully
     environment:
       - ConnectionStrings__RifornimentoDbContext=Server=mssql-server;Database=RifornimentoDb;User Id=sa;Password=p4ssw0rD;TrustServerCertificate=True;
       - Kafka__ProducerClient__BootstrapServers=kafka:29092
