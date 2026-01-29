@@ -39,6 +39,31 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope()) {
     var context = scope.ServiceProvider.GetRequiredService<MagazzinoDbContext>();
     context.Database.EnsureCreated();
+    if (!context.Prodotti.Any()) {
+        Console.WriteLine("Il DB è vuoto. Inserisco prodotti di default...");
+
+        context.Prodotti.AddRange(
+            new Ecommerce.Magazzino.Repository.Model.Prodotto {
+                Nome = "iPhone 15 Pro",
+                Descrizione = "Smartphone Apple",
+                Prezzo = 1200,
+                QuantitaDisponibile = 100,
+                SogliaMinima = 50,
+                QuantitaRiordino = 100
+            },
+            new Ecommerce.Magazzino.Repository.Model.Prodotto {
+                Nome = "PlayStation 5",
+                Descrizione = "Console Sony (Scarsità artificiale)",
+                Prezzo = 500,
+                QuantitaDisponibile = 12,
+                SogliaMinima = 10,
+                QuantitaRiordino = 25
+            }
+        );
+
+        context.SaveChanges();
+        Console.WriteLine("Prodotti inseriti con successo!");
+    }
 }
 
 // Configure the HTTP request pipeline.
