@@ -6,7 +6,6 @@ using Microsoft.EntityFrameworkCore;
 using Utility.Kafka.Abstractions.Clients;
 using Utility.Kafka.Clients;
 using Ecommerce.Magazzino.Api.Worker;
-using Ecommerce.Pagamenti.Api.Worker;
 
 var builder = WebApplication.CreateBuilder(args);
 

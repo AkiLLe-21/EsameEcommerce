@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Utility.Kafka.Abstractions.Clients;
 
-namespace Ecommerce.Pagamenti.Api.Worker;
+namespace Ecommerce.Magazzino.Api.Worker;
 
 public class OutboxPublisherWorker : BackgroundService {
     private readonly IServiceProvider _serviceProvider;
