@@ -5,7 +5,6 @@ using Utility.Kafka.Abstractions.Clients;
 namespace Ecommerce.Ordini.Api.Worker;
 
 public class KafkaPagamentiConsumerWorker : BackgroundService {
-    // Nota: Usiamo <string, string> come abbiamo imparato
     private readonly IConsumerClient<string, string> _consumerClient;
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<KafkaPagamentiConsumerWorker> _logger;
@@ -31,7 +30,6 @@ public class KafkaPagamentiConsumerWorker : BackgroundService {
                 if (result != null && result.Message != null) {
                     _logger.LogInformation($"Ricevuto esito pagamento: {result.Topic}");
 
-                    // Il payload da Pagamenti è: { "OrdineId": 123, "Esito": true, ... }
                     using var doc = JsonDocument.Parse(result.Message.Value);
 
                     if (doc.RootElement.TryGetProperty("OrdineId", out var idProp)) {
