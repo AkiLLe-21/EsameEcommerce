@@ -14,7 +14,9 @@ public class Business(IRepository repository, ILogger<Business> logger) : IBusin
             Nome = dto.Nome,
             Descrizione = dto.Descrizione,
             Prezzo = dto.Prezzo,
-            QuantitaDisponibile = dto.QuantitaDisponibile
+            QuantitaDisponibile = dto.QuantitaDisponibile,
+            SogliaMinima = dto.SogliaMinima,
+            QuantitaRiordino = dto.QuantitaRiordino
         };
 
         await repository.CreateProdottoAsync(prodotto, cancellationToken);

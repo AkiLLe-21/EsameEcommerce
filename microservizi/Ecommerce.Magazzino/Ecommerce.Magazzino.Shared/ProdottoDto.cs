@@ -6,4 +6,6 @@ public class ProdottoDto {
     public string? Descrizione { get; set; }
     public decimal Prezzo { get; set; }
     public int QuantitaDisponibile { get; set; }
+    public int SogliaMinima { get; set; }
+    public int QuantitaRiordino { get; set; }
 }
