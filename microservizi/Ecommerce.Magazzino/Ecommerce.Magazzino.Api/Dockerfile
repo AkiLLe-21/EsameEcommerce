@@ -27,7 +27,6 @@ COPY ["Ecommerce.Magazzino.Shared/Ecommerce.Magazzino.Shared.csproj", "Ecommerce
 RUN dotnet restore "./Ecommerce.Magazzino.Api/Ecommerce.Magazzino.Api.csproj"
 
 
-
 COPY . .
 WORKDIR "/src/Ecommerce.Magazzino.Api"
 RUN dotnet build "./Ecommerce.Magazzino.Api.csproj" -c $BUILD_CONFIGURATION -o /app/build --no-restore
