@@ -19,7 +19,7 @@ public class KafkaConsumerWorker : BackgroundService {
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
-        _consumerClient.Subscribe(new List<string> { "ordine-creato", "pagamento-fallito" });
+        _consumerClient.Subscribe(new List<string> { "ordine-creato", "pagamento-fallito", "rifornimento-arrivato" });
         _logger.LogInformation("Magazzino Worker: In ascolto su 'ordine-creato' e 'pagamento-fallito'...");
 
         while (!stoppingToken.IsCancellationRequested) {
