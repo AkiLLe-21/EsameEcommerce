@@ -37,20 +37,6 @@ services:
       - zookeeper
     ports:
       - "9092:9092"
-    entrypoint: [ '/bin/sh', '-c' ]
-    command: |
-      "
-      # Blocco finché Kafka non risponde (sicurezza extra)
-      echo -e 'Attendo Kafka...'
-      cub kafka-ready -b kafka:29092 1 30
-
-      echo -e 'Creazione topic in corso...'
-      
-      kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic ordine-creato --partitions 1 --replication-factor 1
-      kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic pagamento-fallito --partitions 1 --replication-factor 1
-      kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic sotto-scorta --partitions 1 --replication-factor 1
-      kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic rifornimento-arrivato --partitions 1 --replication-factor 1
-      "
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
@@ -166,6 +152,26 @@ services:
       - Kafka__ConsumerClient__BootstrapServers=kafka:29092
       - Kafka__ConsumerClient__GroupId=gruppo-fornitori
       - Kafka__ConsumerClient__AutoOffsetReset=Earliest
+
+  kafka-init:
+    image: confluentinc/cp-kafka:7.7.0
+    container_name: kafka-init
+    depends_on:
+      kafka:
+        condition: service_healthy
+    entrypoint: [ '/bin/sh', '-c' ]
+    command: |
+      "
+      echo -e 'Attendo Kafka...'
+      cub kafka-ready -b kafka:29092 1 30
+
+      echo -e 'Creazione topic in corso...'
+      
+      kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic ordine-creato --partitions 1 --replication-factor 1
+      kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic pagamento-fallito --partitions 1 --replication-factor 1
+      kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic sotto-scorta --partitions 1 --replication-factor 1
+      kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic rifornimento-arrivato --partitions 1 --replication-factor 1
+      "
 
 volumes:
   sqlvolume:

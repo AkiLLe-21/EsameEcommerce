@@ -53,35 +53,12 @@ public class KafkaConsumerWorker : BackgroundService {
                             _logger.LogWarning($"SAGA COMPENSAZIONE: Restituita merce ID {id}, Qta {qta}");
 
                         } else if (result.Topic == "rifornimento-arrivato") {
-                            // LOG 1: Ingresso nel blocco
-                            _logger.LogError("🛑 [DEBUG WORKER] 1. Messaggio intercettato! Inizio elaborazione.");
+                            // --- CASO 3: RIFORNISCO IL MAGAZZINO ---
+                            int id = doc.RootElement.GetProperty("ProdottoId").GetInt32();
+                            int qta = doc.RootElement.GetProperty("Quantita").GetInt32();
 
-                            try {
-                                // LOG 2: Stampiamo cosa è arrivato
-                                string json = result.Message.Value;
-                                _logger.LogError($"🛑 [DEBUG WORKER] 2. JSON ricevuto: {json}");
-
-
-                                // LOG 3: Parsing ID
-                                int id = doc.RootElement.GetProperty("ProdottoId").GetInt32();
-                                _logger.LogError($"🛑 [DEBUG WORKER] 3. ID parsato: {id}");
-
-                                // LOG 4: Parsing Quantità (Attenzione qui!)
-                                int qta = doc.RootElement.GetProperty("Quantita").GetInt32();
-                                _logger.LogError($"🛑 [DEBUG WORKER] 4. Qta parsata: {qta}");
-
-                                // LOG 5: Chiamata al Business
-                                _logger.LogError("🛑 [DEBUG WORKER] 5. Sto chiamando il Business...");
-
-                                await business.IncrementaQuantitaAsync(id, qta, stoppingToken);
-
-                                // LOG 6: Successo
-                                _logger.LogError("🛑 [DEBUG WORKER] 6. Business ritornato con successo. Ciclo finito.");
-                            } catch (Exception ex) {
-                                // LOG 7: C'è stato un errore nel parsing o nella chiamata
-                                _logger.LogError($"🛑 [DEBUG WORKER] 🔥 ECCEZIONE CATTURATA: {ex.Message}");
-                                _logger.LogError($"🛑 [DEBUG WORKER] StackTrace: {ex.StackTrace}");
-                            }
+                            await business.IncrementaQuantitaAsync(id, qta, stoppingToken);
+                            _logger.LogInformation($"MAGAZZINO: Rifornimento completato! ID {id}, +{qta} pezzi.");
                         }
                     }
 
