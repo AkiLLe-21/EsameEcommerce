@@ -70,6 +70,7 @@ services:
       - Kafka__ConsumerClient__BootstrapServers=kafka:29092
       - Kafka__ConsumerClient__GroupId=gruppo-magazzino-aggiornamento
       - Kafka__ConsumerClient__AutoOffsetReset=Earliest
+      - Kafka__ProducerClient__BootstrapServers=kafka:29092
 
   ecommerce-ordini:
     image: ghcr.io/akille-21/esameecommerce/ecommerce-ordini:latest
@@ -121,6 +122,28 @@ services:
       - Kafka__ConsumerClient__GroupId=gruppo-pagamenti
       - Kafka__ConsumerClient__AutoOffsetReset=Earliest
       - Kafka__ProducerClient__BootstrapServers=kafka:29092
+
+  ecommerce-rifornimento:
+    image: ghcr.io/akille-21/esameecommerce/ecommerce-rifornimento:latest
+    container_name: ecommerce-rifornimento
+    pull_policy: always
+    restart: on-failure
+    build:
+      context: ../
+      dockerfile: microservizi/Ecommerce.Rifornimento/Ecommerce.Rifornimento.Api/Dockerfile
+    ports:
+      - "5004:8080"
+    depends_on:
+      mssql-server:
+        condition: service_started
+      kafka:
+        condition: service_healthy
+    environment:
+      - ConnectionStrings__RifornimentoDbContext=Server=mssql-server;Database=RifornimentoDb;User Id=sa;Password=p4ssw0rD;TrustServerCertificate=True;
+      - Kafka__ProducerClient__BootstrapServers=kafka:29092
+      - Kafka__ConsumerClient__BootstrapServers=kafka:29092
+      - Kafka__ConsumerClient__GroupId=gruppo-fornitori
+      - Kafka__ConsumerClient__AutoOffsetReset=Earliest
 
 volumes:
   sqlvolume:
