@@ -35,6 +35,8 @@ builder.Services.AddScoped<IRepository, Repository>();
 builder.Services.AddScoped<IBusiness, Business>();
 
 var app = builder.Build();
+Console.WriteLine("?? [VERSIONE] BUILD ORE 16:18 - CHECK PULIZIA");
+
 using (var scope = app.Services.CreateScope()) {
     var context = scope.ServiceProvider.GetRequiredService<MagazzinoDbContext>();
     context.Database.EnsureCreated();
