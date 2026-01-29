@@ -19,6 +19,7 @@ builder.Services.AddDbContext<MagazzinoDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("MagazzinoDbContext"),
     b => b.MigrationsAssembly("Ecommerce.Magazzino.Api")));
 
+
 builder.Services.Configure<KafkaConsumerClientOptions>(builder.Configuration.GetSection("Kafka:ConsumerClient"));
 builder.Services.AddSingleton<IConsumerClient<string, string>, ConsumerClient>();
 
