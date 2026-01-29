@@ -53,7 +53,7 @@ using (var scope = app.Services.CreateScope()) {
             },
             new Ecommerce.Magazzino.Repository.Model.Prodotto {
                 Nome = "PlayStation 5",
-                Descrizione = "Console Sony (Scarsità artificiale)",
+                Descrizione = "Console Sony",
                 Prezzo = 500,
                 QuantitaDisponibile = 12,
                 SogliaMinima = 10,
