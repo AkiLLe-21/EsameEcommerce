@@ -56,12 +56,33 @@ public class Repository(MagazzinoDbContext context) : IRepository {
     }
 
     public async Task IncrementaQuantitaAsync(int prodottoId, int quantita, CancellationToken token = default) {
+        Console.WriteLine($"[DEBUG DB] 🟢 TENTATIVO INCREMENTO. Cerco Prodotto ID: {prodottoId}. Quantità da aggiungere: {quantita}");
+
+        // Cerchiamo il prodotto
         var prodotto = await context.Prodotti.FindAsync(new object[] { prodottoId }, token);
 
         if (prodotto != null) {
+            Console.WriteLine($"[DEBUG DB] ✅ Prodotto TROVATO: {prodotto.Nome} (ID: {prodotto.Id}). Quantità attuale: {prodotto.QuantitaDisponibile}");
+
+            // Modifica
             prodotto.QuantitaDisponibile += quantita;
+
+            Console.WriteLine($"[DEBUG DB] 🔄 Nuova quantità calcolata: {prodotto.QuantitaDisponibile}. Chiamo SaveChanges...");
+
+            // Forza l'update esplicito (per sicurezza)
             context.Prodotti.Update(prodotto);
-            await context.SaveChangesAsync(token);
+
+            // Salvataggio
+            int righeModificate = await context.SaveChangesAsync(token);
+
+            Console.WriteLine($"[DEBUG DB] 💾 SaveChanges completato. Righe toccate nel DB: {righeModificate}");
+
+            if (righeModificate == 0) {
+                Console.WriteLine($"[DEBUG DB] ⚠️ ATTENZIONE: SaveChanges ha restituito 0! I dati non sono cambiati. Forse EF Core non ha rilevato modifiche?");
+            }
+        } else {
+            // ECCO IL COLPEVOLE SE LO VEDI
+            Console.WriteLine($"[DEBUG DB] ❌ ERRORE CRITICO: Il prodotto con ID {prodottoId} NON ESISTE nel database! Il messaggio Kafka verrà ignorato.");
         }
     }
 
